@@ -7,6 +7,7 @@
 - [Commit 1](#commit-1)
 - [Commit 2](#commit-2)
 - [Commit 3](#commit-3)
+- [Commit 4](#commit-4)
 
 ## Commit 1
 Identifikasi isi fungsi `handle_connection`:
@@ -45,4 +46,9 @@ Implementasi kondisi halaman web tidak tersedia:
 - `buf_reader` digunakan untuk membaca _request_ HTTP yang dikirim dan menyimpannya dalam variabel `request_line`.
 - Kemudian, program mengecek _request_ tersebut dan memberikan _response_ yang sesuai dengan fungsi `send_response`. Jika request adalah `GET / HTTP/1.1`, maka akan mengembalikan `hello.html` dengan status `200 OK`. Selain itu, akan mengembalikan `404.html` dengan status `404 NOT FOUND`.
 - Fungsi `send_response` merupakan hasil _refactor_ yang khusus untuk menangani pengiriman _response_. Tujuannya supaya tiap fungsi melakukan tugasnya masing-masing.
-- Dalam `send_response`, saya mengimplementasikan cara yang sama pada Commit 2 untuk mengembalikan _response_ ke dalam _stream_ TCP dan penanganan error dengan `unwrap()`. Penyesuaian _response_ dilakukan pada `status_line` dan `file_path` HTML yang ingin ditunjukkan sebagai parameter fungsi `send_response`.
+- Dalam `send_response`, saya mengimplementasikan cara yang sama pada Commit 2 untuk mengembalikan _response_ ke dalam _stream_ TCP dan penanganan error dengan `unwrap()`. Penyesuaian _response_ dilakukan pada `status_line` dan `file_name` HTML yang ingin ditunjukkan sebagai parameter fungsi `send_response`.
+
+## Commit 4
+Pemahaman simulasi _slow response_:
+- Saya melakukan sedikit penyesuaian dalam menguji simulasi _slow response_. Saya membuat fungsi `handle_slow_response` khusus untuk menyimulasikan server dengan banyak _user_ yang mengaksesnya. Fungsi terdiri dari pembacaan _request_ seperti `handle_connection`, potongan kode pada modul yang menggunakan `thread` dan `Duration`, serta pemanggilan fungsi `send_response`.
+- Dari potongan kode yang diberikan, setiap kali _request_ yang dikirim ke `http://127.0.0.1:7878/sleep` akan menghasilkan _delay_ selama 10 detik baru program akan mengirim _response_. Kekurangan dari kondisi ini adalah server tidak bisa menangani banyak _request_ karena server bersifat _single-threaded_, sehingga _request_ harus diproses satu per satu.
