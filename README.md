@@ -6,6 +6,7 @@
 ### Module Reflection 6
 - [Commit 1](#commit-1)
 - [Commit 2](#commit-2)
+- [Commit 3](#commit-3)
 
 ## Commit 1
 Identifikasi isi fungsi `handle_connection`:
@@ -27,3 +28,21 @@ Identifikasi _line_ terbaru dari fungsi `handle_connection`:
 - Variabel `length` bertugas untuk menyimpan panjang dari `contents`.
 - Variabel `response` dibentuk dengan `format!` yang menggabungkan `status_line` sebagai status HTTP, `length` sebagai _header_, dan isi `contents` HTML. 
 - `stream.write_all()` akan mengembalikan seluruh _response_ ke dalam _stream_ TCP. `as_bytes()` akan mengubah _string response_ menjadi _array bytes_ dan `unwrap()` akan memastikan penulisan ke `stream` berhasil. Jika gagal atau error, akan menyebabkan _panic_ dan menghentikan program. 
+
+## Commit 3
+![](/images/commit3.png)<br>
+
+Implementasi kondisi halaman web tidak tersedia:
+- Karena saya memanfaatkan variabel `buf_reader`, saya menghapus potongan kode berikut terlebih dahulu.
+    ```
+    let http_request:Vec<_> = buf_reader
+    .lines()
+    .map(|result|result.unwrap())
+    .take_while(|line|!line.is_empty()) 
+    .collect();
+    ```
+    Alasannya karena menimbulkan error `use of moved value`. Namun, potongan kode tersebut sudah tidak dibutuhkan lagi karena fungsi `handle_connection` saat ini sudah tidak menampilkan _request_ HTTP di terminal, melainkan menangani _response_ dari _request_ HTTP.
+- `buf_reader` digunakan untuk membaca _request_ HTTP yang dikirim dan menyimpannya dalam variabel `request_line`.
+- Kemudian, program mengecek _request_ tersebut dan memberikan _response_ yang sesuai dengan fungsi `send_response`. Jika request adalah `GET / HTTP/1.1`, maka akan mengembalikan `hello.html` dengan status `200 OK`. Selain itu, akan mengembalikan `404.html` dengan status `404 NOT FOUND`.
+- Fungsi `send_response` merupakan hasil _refactor_ yang khusus untuk menangani pengiriman _response_. Tujuannya supaya tiap fungsi melakukan tugasnya masing-masing.
+- Dalam `send_response`, saya mengimplementasikan cara yang sama pada Commit 2 untuk mengembalikan _response_ ke dalam _stream_ TCP dan penanganan error dengan `unwrap()`. Penyesuaian _response_ dilakukan pada `status_line` dan `file_path` HTML yang ingin ditunjukkan sebagai parameter fungsi `send_response`.
