@@ -5,33 +5,26 @@ use std::{
     thread,
     time::Duration,
 };
+
+use hello::ThreadPool;
+
 fn main() {
     let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
+    let pool = ThreadPool::new(4);
     for stream in listener.incoming(){
         let stream = stream.unwrap();
-        handle_slow_response(stream);
+        pool.execute(|| {
+            handle_connection(stream);
+        });
     }
 }
 
-// Commit 3 related
-fn handle_connection(mut stream:TcpStream){
-    let buf_reader = BufReader::new(&mut stream);
-
-    let request_line = buf_reader.lines().next().unwrap().unwrap();
- 
-    if request_line == "GET / HTTP/1.1" {
-        send_response("HTTP/1.1 200 OK", "hello.html", &mut stream);
-    } else {
-        send_response("HTTP/1.1 404 NOT FOUND", "404.html", &mut stream);
-    }
-}
-
-// Commit 4 related
-fn handle_slow_response(mut stream: TcpStream) {
+fn handle_connection(mut stream: TcpStream) {
     let buf_reader = BufReader::new(&mut stream);
 
     let request_line = buf_reader.lines().next().unwrap().unwrap();
 
+    // Commit 4 related
     let (status_line, file_name) = match &request_line[..] {
         "GET / HTTP/1.1" => ("HTTP/1.1 200 OK", "hello.html"),
         "GET /sleep HTTP/1.1" => {
@@ -42,6 +35,13 @@ fn handle_slow_response(mut stream: TcpStream) {
     };
 
     send_response(status_line, file_name, &mut stream);
+
+    // Commit 3 related
+    if request_line == "GET / HTTP/1.1" {
+        send_response("HTTP/1.1 200 OK", "hello.html", &mut stream);
+    } else {
+        send_response("HTTP/1.1 404 NOT FOUND", "404.html", &mut stream);
+    }
 }
 
 fn send_response(status_line: &str, file_path: &str, stream: &mut TcpStream) {

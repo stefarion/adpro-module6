@@ -8,6 +8,7 @@
 - [Commit 2](#commit-2)
 - [Commit 3](#commit-3)
 - [Commit 4](#commit-4)
+- [Commit 5](#commit-5)
 
 ## Commit 1
 Identifikasi isi fungsi `handle_connection`:
@@ -52,3 +53,12 @@ Implementasi kondisi halaman web tidak tersedia:
 Pemahaman simulasi _slow response_:
 - Saya melakukan sedikit penyesuaian dalam menguji simulasi _slow response_. Saya membuat fungsi `handle_slow_response` khusus untuk menyimulasikan server dengan banyak _user_ yang mengaksesnya. Fungsi terdiri dari pembacaan _request_ seperti `handle_connection`, potongan kode pada modul yang menggunakan `thread` dan `Duration`, serta pemanggilan fungsi `send_response`.
 - Dari potongan kode yang diberikan, setiap kali _request_ yang dikirim ke `http://127.0.0.1:7878/sleep` akan menghasilkan _delay_ selama 10 detik baru program akan mengirim _response_. Kekurangan dari kondisi ini adalah server tidak bisa menangani banyak _request_ karena server bersifat _single-threaded_, sehingga _request_ harus diproses satu per satu.
+
+## Commit 5
+Implementasi _Multithreaded Server_:
+- Sebelumnya saya menghapus fungsi `handle_slow_response` dan memindahkan potongan kode yang menyimulasikan banyaknya _request_ ke fungsi `handle_connection` karena kedua fungsi tersebut menjalankan tugas yang sama.
+- `ThreadPool` digunakan dalam program untuk membuat server dapat menangani banyak _request_ pada waktu yang bersamaan. `Threadpool` akan mengandalkan _worker_ yang sudah didefinisikan pada `lib.rs`.
+- `let pool = ThreadPool::new(4)` berarti server membuat sebuah `Threadpool` dengan 4 _workers_. Variabel `pool` akan digunakan untuk mendistribusikan pekerjaan (`Job`) ke beberapa _thread_ agar server dapat menangani banyak _request_ secara konkuren.
+- Setiap `stream` yang diterima akan menjalankan _method_ `execute` dari `ThreadPool`. Pekerjaan berupa `handle_connection(stream)` akan dibungkus dalam `Job` dan dikirim melalui _channel_ `Sender`. Salah satu _worker_ akan menerima `Job` tersebut dengan `receiver`.
+- Variabel `receiver` akan diakses oleh banyak _worker_, sehingga `Arc` digunakan untuk kepemilikan bersama dan `Mutex` digunakan untuk memastikan hanya satu _thread worker_ yang mengakses `receiver` pada satu waktu.
+- Setiap _worker_ akan berjalan dalam _loop_ terus-menerus hingga menerima `Job` melalui _channel_. Jika _channel_ terputus atau error, `unwrap()` akan menyebabkan _panic_ dan menghentikan program. Setelah menerima `Job`, _worker_ akan mengeksekusi pekerjaan tersebut dan setelah selesai, _worker_ akan kembali ke dalam _loop_.
