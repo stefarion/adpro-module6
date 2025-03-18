@@ -9,6 +9,7 @@
 - [Commit 3](#commit-3)
 - [Commit 4](#commit-4)
 - [Commit 5](#commit-5)
+- [Bonus](#commit-bonus)
 
 ## Commit 1
 Identifikasi isi fungsi `handle_connection`:
@@ -62,3 +63,6 @@ Implementasi _Multithreaded Server_:
 - Setiap `stream` yang diterima akan menjalankan _method_ `execute` dari `ThreadPool`. Pekerjaan berupa `handle_connection(stream)` akan dibungkus dalam `Job` dan dikirim melalui _channel_ `Sender`. Salah satu _worker_ akan menerima `Job` tersebut dengan `receiver`.
 - Variabel `receiver` akan diakses oleh banyak _worker_, sehingga `Arc` digunakan untuk kepemilikan bersama dan `Mutex` digunakan untuk memastikan hanya satu _thread worker_ yang mengakses `receiver` pada satu waktu.
 - Setiap _worker_ akan berjalan dalam _loop_ terus-menerus hingga menerima `Job` melalui _channel_. Jika _channel_ terputus atau error, `unwrap()` akan menyebabkan _panic_ dan menghentikan program. Setelah menerima `Job`, _worker_ akan mengeksekusi pekerjaan tersebut dan setelah selesai, _worker_ akan kembali ke dalam _loop_.
+
+## Commit Bonus
+Dalam melakukan _improvement_ pada `ThreadPool`, saya mengganti fungsi `new` menjadi `build` yang sama-sama menerima parameter `size`, di mana `size` menentukan jumlah _thread worker_ yang akan dibuat. Perbedaan `new` sebelumnya dengan `build` terletak pada penanganan error. Dalam fungsi `new`, _method_ `assert!` akan membuat program _panic_ ketika `size` bernilai tidak valid (<=0) dan program langsung berhenti. Dalam fungsi `build`, ketika menghadapi `size` tidak valid, fungsi akan mengembalikan error `Err` berupa _string_ statis daripada menghentikan program langsung. Tujuannya untuk memberikan kesempatan bagi pemanggil fungsi untuk menangani error tersebut selagi program masih berjalan.
